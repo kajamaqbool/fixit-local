@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>FixIt Local - Socket Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.2/dist/socket.io.min.js"></script>
+</head>
+
+<body style="font-family: sans-serif; max-width: 500px; margin: 40px auto;">
+    <h2>Socket.io Test Client</h2>
+
+    <label>JWT Token:</label><br />
+    <input id="token" style="width:100%" placeholder="Paste token here" /><br /><br />
+
+    <label>Booking ID:</label><br />
+    <input id="bookingId" style="width:100%" placeholder="Paste booking _id here" /><br /><br />
+
+    <button onclick="connect()">Connect</button>
+    <button onclick="joinRoom()">Join Booking Room</button>
+    <hr />
+
+    <label>Message:</label><br />
+    <input id="msgText" style="width:70%" />
+    <button onclick="sendMessage()">Send</button>
+    <hr />
+
+    <label>Location (provider only):</label><br />
+    <input id="lat" placeholder="lat" style="width:100px" />
+    <input id="lng" placeholder="lng" style="width:100px" />
+    <button onclick="sendLocation()">Update Location</button>
+    <hr />
+
+    <h3>Log</h3>
+    <div id="log" style="background:#f5f5f5; padding:10px; height:250px; overflow-y:auto; font-size:13px;"></div>
+
+    <script>
+        let socket;
+
+        function log(msg) {
+            const div = document.getElementById('log');
+            div.innerHTML += `<div>${new Date().toLocaleTimeString()} — ${msg}</div>`;
+            div.scrollTop = div.scrollHeight;
+        }
+
+        function connect() {
+            const token = document.getElementById('token').value;
+            socket = io('http://localhost:5000', { auth: { token } });
+
+            socket.on('connect', () => log('Connected: ' + socket.id));
+            socket.on('connect_error', (err) => log('Connection error: ' + err.message));
+            socket.on('newMessage', (msg) => log(`💬 [${msg.senderRole}]: ${msg.text}`));
+            socket.on('providerLocation', (loc) => log(`📍 Location update: ${loc.lat}, ${loc.lng}`));
+        }
+
+        function joinRoom() {
+            const bookingId = document.getElementById('bookingId').value;
+            socket.emit('joinBookingRoom', bookingId);
+            log('Joined room: ' + bookingId);
+        }
+
+        function sendMessage() {
+            const bookingId = document.getElementById('bookingId').value;
+            const text = document.getElementById('msgText').value;
+            socket.emit('sendMessage', { bookingId, text });
+            document.getElementById('msgText').value = '';
+        }
+
+        function sendLocation() {
+            const bookingId = document.getElementById('bookingId').value;
+            const lat = parseFloat(document.getElementById('lat').value);
+            const lng = parseFloat(document.getElementById('lng').value);
+            socket.emit('updateLocation', { bookingId, lat, lng });
+        }
+    </script>
+</body>
+
+</html>
