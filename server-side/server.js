@@ -13,7 +13,15 @@ const initSocket = require('./socket/socketHandler');
 const app = express();
 connectDB();
 
-app.use(cors());
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://fixit-local-teal.vercel.app'
+];
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
@@ -23,7 +31,9 @@ app.use('/api/bookings', bookingRoutes);
 app.get('/', (req, res) => res.send('FixIt Local API running'));
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+const io = new Server(server, {
+    cors: { origin: allowedOrigins, credentials: true }
+});
 
 initSocket(io);
 
